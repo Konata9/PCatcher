@@ -1,0 +1,12 @@
+{
+  "name": "Pcatcher",
+  "version": "1.0.0",
+  "description": "P站抓图小工具",
+  "main": "index.js",
+  "author": "Konata9",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^0.22.0",
+    "superagent": "^3.5.2"
+  }
+}
