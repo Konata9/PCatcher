@@ -1,5 +1,6 @@
 # ignore folder
 node_modules
+picture
 
 # ignore file
 config/user_info.js

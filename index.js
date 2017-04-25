@@ -6,3 +6,8 @@
 const UserInfo = require('./config/user_info');
 const BaseInfo = require('./config/base_info');
 
+const PCatcher = require('./src/pcatcher');
+
+let cather = new PCatcher(UserInfo, BaseInfo);
+
+cather.loginStart();
