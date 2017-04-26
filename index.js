@@ -10,4 +10,4 @@ const PCatcher = require('./src/pcatcher');
 
 let cather = new PCatcher(UserInfo, BaseInfo);
 
-cather.loginStart();
+cather.init();

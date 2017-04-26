@@ -6,6 +6,7 @@
   "author": "Konata9",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.3.0",
     "cheerio": "^0.22.0",
     "set-cookie-parser": "^2.0.0",
     "superagent": "^3.5.2"
