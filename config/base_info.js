@@ -13,7 +13,6 @@ let BaseInfo = {
     'accept-language': 'zh-CN,zh;q=0.8,zh-TW;q=0.6',
     'connection': 'keep-alive',
     'host': 'www.pixiv.net',
-    'referer': 'https://www.pixiv.net/',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36',
   },
   // post用头部
@@ -34,8 +33,8 @@ let BaseInfo = {
     'ref': 'wwwtop_accounts_index',
     'return_to': 'https://www.pixiv.net/'
   },
-  // 存放cookie
-  'cookieStore':'./cookie.js'
+  // 下载图片用提交的referer
+  'imgReferer': 'https://www.pixiv.net/member_illust.php?mode=medium&illust_id='
 };
 
 module.exports = BaseInfo;

@@ -8,6 +8,7 @@ const cheerio = require('cheerio');
 const async = require('async');
 // 打包parser
 const setCookieParser = require('set-cookie-parser');
+const path = require('path');
 const fs = require('fs');
 
 class PCatcher {
@@ -15,6 +16,8 @@ class PCatcher {
     // 引入config文件中设置的参数
     this.userInfo = userInfo;
     this.baseInfo = baseInfo;
+    // 记录下载图片的数量
+    this.imgCount = 0;
   }
 
   /**
@@ -37,7 +40,7 @@ class PCatcher {
     let imgList = [
       // 数据结构
       // {
-      //   'title': 图片的标题
+      //   'id': 图片的id
       //   'src': 图片的地址
       //  'star': 图片获得的星数
       // }
@@ -49,26 +52,34 @@ class PCatcher {
     });
 
     let domImgWrapper = $('.column-search-result .image-item ._work');
-    domImgWrapper.each(function (index, element) {
+    domImgWrapper.each((index, element) => {
       if (!$(element).hasClass('manga')) {
         if (!$(element).hasClass('ugoku-illust')) {
           let imgData = {
-            'title': '',
-            'src': '',
+            'id': 0,
+            'href': '',
             'star': 0
           }
 
           let imgSrc = $(element).find('img').attr('data-src');
-          // 获取图片后缀名
-          imgData.title = imgSrc.match(/\/([\d\w_]*\.jpg|png|jpeg)/)[1];
-          // 获取原图地址
-          imgData.src = imgSrc.replace(/c\/[\dx]*\/img-master/, 'img-original');
+          // 图片id
+          imgData.id = $(element).find('img').attr('data-id');
+          // 获取原图所在页面
+          // 多张图与单张图之间url是有差别的
+          let imgHref = $(element).attr('href');
+          if ($(element).hasClass('multiple')) {
+            imgData.href = this.baseInfo.rootURL + imgHref.replace(/medium/, 'manga');
+          } else {
+            imgData.href = this.baseInfo.rootURL + imgHref;
+          }
           // 获取图片的star数
           let starWrapper = $(element).nextAll('ul').find('a').text();
           if (starWrapper) {
             imgData.star = parseInt(starWrapper);
           }
           imgList.push(imgData);
+
+          // console.dir(imgData);
         }
       }
     });
@@ -76,8 +87,63 @@ class PCatcher {
     return imgList;
   }
 
-  getImg(imgItem, userInfo, callback) {
-    
+  /**
+   * 储存图片
+   * @param {*} imgItem  图片对象 
+   * @param {*} userInfo  用户相关设置
+   * @param {*} baseInfo 请求相关设置
+   * @param {*} callback  用来控制async的回调函数
+   */
+  getImg(imgItem, callback) {
+    let filePath = this.userInfo.filePath + this.userInfo.keyWord;
+    console.log(filePath);
+    if (!fs.existsSync(filePath)) {
+      console.log('====== 文件夹不存在 创建目标文件夹 ======');
+      fs.mkdirSync(filePath);
+    }
+    console.log('图片将存放在此路径： [' + filePath + ' ]');
+
+    console.log(`====== 正在下载图片 ${imgItem.title}======`);
+
+    // 针对防止盗链，需要设置临时的referer
+    // 当原图为png格式时，无法从搜索页推出真实地址，因此都从对应页面获取真实地址
+    request.get(imgItem.href)
+      .set(this.baseInfo.header)
+      .end((error, response) => {
+        if (!error && response.statusCode == 200) {
+          // console.log("====== 准备获取原图路径 ======");
+          let $ = cheerio.load(response.text);
+
+          let imgSrcList = [];
+          if ($('._illust_modal').length) {
+            imgSrcList.push($('._illust_modal .wrapper .original-image').attr('data-src'));
+          } else {
+            let domImgSrc = $('.manga .item-container img');
+            $(domImgSrc).each((index, element) => {
+              imgSrcList.push($(element).attr('data-src'));
+            });
+          }
+
+          // console.dir(imgSrcList);
+
+          imgSrcList.forEach((imgSrc) => {
+            request.get(imgSrc)
+              .set('referer', imgItem.href)
+              .end((error, response) => {
+                if (!error && response.statusCode == 200) {
+                  let imgTitle = imgSrc.match(/\/([\d\w_]*\.jpg|png|jpeg)/)[1];
+                  let writeStream = fs.createWriteStream(filePath + '/' + imgTitle);
+                  writeStream.write(response.body);
+                  console.log(`====== 图片 ${imgTitle} 成功下载 ======`);
+                }
+              });
+          });
+
+          callback(null, imgItem);
+        } else {
+          console.log(response.statusCode);
+        }
+      });
   }
 
   /**
@@ -219,10 +285,10 @@ class PCatcher {
 
             console.log('====== 成功获取图片列表 ======');
             // 控制下载图片的并发数
-            async.mapLimit(imgList, this.userInfo.max_async, function (imgItem, callback) {
-              this.getImg(imgItem, this.userInfo, callback);
-            }, function (err, result) {
-              console.log('====== ')
+            async.mapLimit(imgList, this.userInfo.max_async, (imgItem, callback) => {
+              this.getImg(imgItem, callback);
+            }, (err, result) => {
+              console.log('====== 当前页下载完成，准备下载下一页 ====== ');
             });
 
             if (callback) {
