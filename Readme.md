@@ -18,6 +18,7 @@
 2. 使用    
   使用方法请参照`config`文件夹下`user_info.js`文件。    
   填写好用户名、密码、关键词。并按照注释调整好`searchConfig`的参数后，运行下面命令即可。
+  **首次使用时请先手动创建picture文件夹（与index.js同一层级）**
   ```
   node index.js
   ```
