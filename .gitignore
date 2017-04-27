@@ -3,4 +3,5 @@ node_modules
 
 # ignore file
 #config/user_info.js
+.vscode
 
