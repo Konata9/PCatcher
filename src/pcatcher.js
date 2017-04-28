@@ -85,30 +85,33 @@ class PCatcher {
       }
     });
 
-    async.mapLimit(imgList, this.userInfo.max_async, (imgItem, callback) => {
-      request.get(imgItem.href)
-        .set(this.baseInfo.header)
-        .end((error, response) => {
-          if (!error && response.statusCode == 200) {
-            // console.log("====== 准备获取原图路径 ======");
-            let $ = cheerio.load(response.text);
+    // 只有当列表不为空时进行下载
+    if (imgList.length > 0) {
+      async.mapLimit(imgList, this.userInfo.max_async, (imgItem, callback) => {
+        request.get(imgItem.href)
+          .set(this.baseInfo.header)
+          .end((error, response) => {
+            if (!error && response.statusCode == 200) {
+              // console.log("====== 准备获取原图路径 ======");
+              let $ = cheerio.load(response.text);
 
-            if ($('._illust_modal').length) {
-              imgSrcList.push($('._illust_modal .wrapper .original-image').attr('data-src'));
-            } else {
-              let domImgSrc = $('.manga .item-container img');
-              $(domImgSrc).each((index, element) => {
-                imgSrcList.push($(element).attr('data-src'));
-              });
+              if ($('._illust_modal').length) {
+                imgSrcList.push($('._illust_modal .wrapper .original-image').attr('data-src'));
+              } else {
+                let domImgSrc = $('.manga .item-container img');
+                $(domImgSrc).each((index, element) => {
+                  imgSrcList.push($(element).attr('data-src'));
+                });
+              }
+              callback(null, imgItem);
             }
-            callback(null, imgItem);
-          }
-        });
-    }, (error, result) => {
-      console.log('====== 原图链接列表完成 ======');
-      // console.log(imgSrcList);
-      _callback.call(this, imgSrcList);
-    });
+          });
+      }, (error, result) => {
+        console.log('====== 原图链接列表完成 ======');
+        // console.log(imgSrcList);
+        _callback.call(this, imgSrcList);
+      });
+    }
   }
 
   /**
