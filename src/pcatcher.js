@@ -62,6 +62,10 @@ class PCatcher {
             'href': ''
           }
 
+          // 获取收藏的星数
+          let bookMark = parseInt($(element).nextAll('.count-list').find('a').text());
+          console.log(`该图收藏数为: ${bookMark} `);
+
           let imgSrc = $(element).find('img').attr('data-src');
           // 图片id
           imgData.id = $(element).find('img').attr('data-id');
@@ -74,7 +78,9 @@ class PCatcher {
             imgData.href = this.baseInfo.rootURL + imgHref;
           }
 
-          imgList.push(imgData);
+          if (bookMark >= this.userInfo.bookMarker) {
+            imgList.push(imgData);
+          }
         }
       }
     });
